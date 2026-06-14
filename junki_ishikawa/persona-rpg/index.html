@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>理想人格RPG</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #07071a;
+      color: #e0e0ff;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px 16px 48px;
+    }
+
+    .container { max-width: 400px; width: 100%; }
+
+    /* --- 共通 --- */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      color: #a78bfa;
+      letter-spacing: 0.25em;
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 0.72rem;
+      color: #4b4b6e;
+      margin-bottom: 28px;
+      letter-spacing: 0.1em;
+    }
+
+    .card {
+      background: #10102a;
+      border: 1px solid #22224a;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .label {
+      font-size: 0.68rem;
+      color: #7070a0;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: #07071a;
+      border: 1px solid #2d2d50;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e0e0ff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #a78bfa; }
+
+    /* --- セットアップ --- */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .cat-btn {
+      background: #07071a;
+      border: 1px solid #2d2d50;
+      border-radius: 8px;
+      padding: 10px;
+      color: #6060a0;
+      font-family: inherit;
+      font-size: 0.83rem;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .cat-btn.on {
+      background: #1e0d4e;
+      border-color: #a78bfa;
+      color: #c4b5fd;
+    }
+
+    .btn-start {
+      width: 100%;
+      background: #a78bfa;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      color: #07071a;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+    .btn-start:hover { background: #c4b5fd; }
+
+    /* --- キャラクターエリア --- */
+    .char-wrap {
+      text-align: center;
+      padding: 10px 0 14px;
+    }
+    .char-emoji { font-size: 4.5rem; line-height: 1; transition: transform 0.3s; }
+    .char-emoji.pulse { animation: pulse 0.4s ease; }
+    @keyframes pulse {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.25); }
+      100% { transform: scale(1); }
+    }
+    .char-aura {
+      font-size: 0.7rem;
+      color: #a78bfa;
+      letter-spacing: 0.25em;
+      margin-top: 8px;
+    }
+    .char-name {
+      font-size: 1.05rem;
+      color: #e0e0ff;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+    .char-sub {
+      font-size: 0.7rem;
+      color: #5050a0;
+      margin-top: 2px;
+    }
+
+    /* --- ステータス行 --- */
+    .stats-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      flex: 1;
+      background: #07071a;
+      border: 1px solid #1a1a3a;
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 1.3rem;
+      color: #a78bfa;
+      font-weight: bold;
+    }
+    .stat-lbl {
+      font-size: 0.6rem;
+      color: #4040a0;
+      margin-top: 2px;
+      letter-spacing: 0.1em;
+    }
+
+    /* --- XPバー --- */
+    .xp-wrap { margin-bottom: 12px; }
+    .xp-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: #4040a0;
+      margin-bottom: 4px;
+    }
+    .xp-track {
+      height: 5px;
+      background: #10102a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6d28d9, #a78bfa);
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    /* --- ペルソナメッセージ --- */
+    .persona-msg {
+      background: #0d0928;
+      border-left: 3px solid #7c3aed;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 14px;
+      font-size: 0.83rem;
+      color: #c4b5fd;
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+
+    /* --- 警告バー --- */
+    .warning {
+      background: #1f1200;
+      border: 1px solid #78350f;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      color: #fbbf24;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .warning.show { display: block; }
+
+    /* --- レベルアップ --- */
+    .lvup {
+      text-align: center;
+      background: #120d30;
+      border: 1px solid #7c3aed;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.83rem;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .lvup.show { display: block; animation: fadein 0.4s ease; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    /* --- 行動入力 --- */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .input-row input { margin-bottom: 0; flex: 1; }
+    .btn-log {
+      background: #a78bfa;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #07071a;
+      font-family: inherit;
+      font-weight: bold;
+      font-size: 0.83rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-log:hover { background: #c4b5fd; }
+
+    .mini-cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .mini-cat {
+      background: #07071a;
+      border: 1px solid #2d2d50;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.73rem;
+      color: #5050a0;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .mini-cat.on {
+      background: #1e0d4e;
+      border-color: #a78bfa;
+      color: #c4b5fd;
+    }
+
+    /* --- 履歴 --- */
+    .history-title {
+      font-size: 0.65rem;
+      color: #4040a0;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 10px;
+    }
+    .hist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid #10102a;
+      font-size: 0.78rem;
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-cat {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #1e0d4e;
+      color: #a78bfa;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .hist-text { color: #a0a0cc; flex: 1; }
+    .hist-xp { color: #6d28d9; font-size: 0.68rem; flex-shrink: 0; }
+
+    .empty-hist {
+      font-size: 0.78rem;
+      color: #2a2a50;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    /* --- リセット --- */
+    .reset {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.65rem;
+      color: #22224a;
+      cursor: pointer;
+    }
+    .reset:hover { color: #4040a0; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- セットアップ画面 -->
+  <div id="setup" class="screen active">
+    <h1>理想人格RPG</h1>
+    <p class="subtitle">理想の自分になりきって、現実を変えていく</p>
+
+    <div class="card">
+      <div class="label">理想の自分の名前</div>
+      <input type="text" id="p-name" placeholder="例：毎朝走る石川、学び続ける俺" maxlength="20">
+
+      <div class="label">一言で言うと</div>
+      <input type="text" id="p-desc" placeholder="例：タフで賢い行動者" maxlength="30">
+
+      <div class="label">目標カテゴリ（複数可）</div>
+      <div class="cat-grid">
+        <button class="cat-btn" data-cat="📚 学習">📚 学習</button>
+        <button class="cat-btn" data-cat="💪 健康">💪 健康</button>
+        <button class="cat-btn" data-cat="🎨 創作">🎨 創作</button>
+        <button class="cat-btn" data-cat="🧘 精神">🧘 精神</button>
+        <button class="cat-btn" data-cat="💼 仕事">💼 仕事</button>
+        <button class="cat-btn" data-cat="📣 発信">📣 発信</button>
+      </div>
+
+      <button class="btn-start" onclick="setup()">理想の自分を呼び起こす</button>
+    </div>
+  </div>
+
+  <!-- メイン画面 -->
+  <div id="main" class="screen">
+
+    <div class="card">
+      <div class="char-wrap">
+        <div class="char-emoji" id="c-emoji">🌱</div>
+        <div class="char-aura" id="c-aura">【 接続中 】</div>
+        <div class="char-name" id="c-name"></div>
+        <div class="char-sub" id="c-sub"></div>
+      </div>
+    </div>
+
+    <div class="warning" id="warning">
+      ⚡ 接続が弱まっています。何か一つ、記録してください。
+    </div>
+
+    <div class="lvup" id="lvup">✨ レベルアップ — 理想の自分がまた強くなった</div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val" id="s-lv">1</div>
+        <div class="stat-lbl">LEVEL</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-st">0</div>
+        <div class="stat-lbl">STREAK</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="s-ac">0</div>
+        <div class="stat-lbl">ACTIONS</div>
+      </div>
+    </div>
+
+    <div class="xp-wrap">
+      <div class="xp-meta">
+        <span>EXP</span><span id="xp-txt">0 / 100</span>
+      </div>
+      <div class="xp-track">
+        <div class="xp-fill" id="xp-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="persona-msg" id="p-msg"></div>
+
+    <div class="card">
+      <div class="label">今日やったこと</div>
+      <div class="input-row">
+        <input type="text" id="act-input" placeholder="例：30分勉強した" maxlength="50">
+        <button class="btn-log" onclick="logAction()">記録</button>
+      </div>
+      <div class="mini-cats" id="mini-cats"></div>
+    </div>
+
+    <div class="card">
+      <div class="history-title">行動ログ</div>
+      <div id="hist"></div>
+    </div>
+
+    <div class="reset" onclick="reset()">最初からやり直す</div>
+
+  </div>
+</div>
+
+<script>
+  const XP_PER_ACT = 20;
+
+  const STATES = {
+    great:  { emoji: "⚔️",  aura: "【  絶好調  】" },
+    good:   { emoji: "🌟",  aura: "【  元  気  】" },
+    normal: { emoji: "🧑",  aura: "【  普  通  】" },
+    weak:   { emoji: "🌫️", aura: "【 弱まり中 】" },
+    dead:   { emoji: "💤",  aura: "【 接続切れ 】" },
+  };
+
+  const MSGS = {
+    great: [
+      "「完璧だ。この調子で、俺たちは本当に変わっていける。」",
+      "「記録が積み重なっている。お前には確かな力がある。」",
+      "「今日の行動が、未来の俺を作っている。止まるな。」",
+    ],
+    good: [
+      "「悪くない。一歩一歩で十分だ。」",
+      "「記録してくれた。それだけで俺は存在できる。」",
+      "「目標から離れていない。それが全てだ。」",
+    ],
+    normal: [
+      "「今日はどうだった？何でもいい、記録してみろ。」",
+      "「俺はここにいる。お前の行動を待っている。」",
+      "「小さくていい。今日の一手を見せてくれ。」",
+    ],
+    weak: [
+      "「少し接続が弱まっている。何か一つでいい。」",
+      "「俺のことを忘れないでくれ。まだここにいる。」",
+    ],
+    dead: [
+      "「…まだ、つながれる。戻ってきてくれ。」",
+      "「俺は消えていない。お前が動けば、また動き出せる。」",
+    ],
+  };
+
+  // カテゴリ選択（セットアップ）
+  let selectedCats = [];
+  document.querySelectorAll(".cat-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("on");
+      const c = btn.dataset.cat;
+      selectedCats = selectedCats.includes(c)
+        ? selectedCats.filter(x => x !== c)
+        : [...selectedCats, c];
+    });
+  });
+
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  function load() {
+    const r = localStorage.getItem("prpg");
+    return r ? JSON.parse(r) : null;
+  }
+  function save(s) { localStorage.setItem("prpg", JSON.stringify(s)); }
+
+  function setup() {
+    const name = document.getElementById("p-name").value.trim();
+    if (!name) { alert("名前を入力してください"); return; }
+    if (!selectedCats.length) { alert("カテゴリを選んでください"); return; }
+
+    const s = {
+      name,
+      desc: document.getElementById("p-desc").value.trim() || "理想の自分",
+      cats: selectedCats,
+      lv: 1, xp: 0,
+      streak: 0, lastDate: null, total: 0,
+      history: [],
+    };
+    save(s);
+    renderMain(s);
+  }
+
+  let activeCat = null;
+
+  function renderMain(s, leveledUp = false) {
+    document.getElementById("setup").classList.remove("active");
+    document.getElementById("main").classList.add("active");
+
+    // カテゴリボタン（初回のみ生成）
+    const mc = document.getElementById("mini-cats");
+    if (!mc.children.length) {
+      s.cats.forEach((cat, i) => {
+        const b = document.createElement("button");
+        b.className = "mini-cat" + (i === 0 ? " on" : "");
+        b.textContent = cat;
+        b.onclick = () => {
+          document.querySelectorAll(".mini-cat").forEach(x => x.classList.remove("on"));
+          b.classList.add("on");
+          activeCat = cat;
+        };
+        mc.appendChild(b);
+      });
+      activeCat = s.cats[0];
+    }
+
+    // ペルソナ状態
+    const t = today();
+    const diff = s.lastDate
+      ? Math.floor((new Date(t) - new Date(s.lastDate)) / 86400000)
+      : 999;
+    const pst = diff === 0 && s.streak >= 3 ? "great"
+              : diff === 0 ? "good"
+              : diff === 1 ? "normal"
+              : diff === 2 ? "weak"
+              : "dead";
+
+    const cs = STATES[pst];
+    document.getElementById("c-emoji").textContent = cs.emoji;
+    document.getElementById("c-aura").textContent = cs.aura;
+    document.getElementById("c-name").textContent = s.name;
+    document.getElementById("c-sub").textContent = `Lv.${s.lv} ／ ${s.desc}`;
+
+    document.getElementById("s-lv").textContent = s.lv;
+    document.getElementById("s-st").textContent = s.streak;
+    document.getElementById("s-ac").textContent = s.total;
+
+    const xpNeeded = s.lv * 100;
+    document.getElementById("xp-fill").style.width = (s.xp / xpNeeded * 100) + "%";
+    document.getElementById("xp-txt").textContent = `${s.xp} / ${xpNeeded}`;
+
+    const pool = MSGS[pst];
+    document.getElementById("p-msg").textContent = pool[Math.floor(Math.random() * pool.length)];
+
+    document.getElementById("warning").classList.toggle("show", pst === "weak" || pst === "dead");
+
+    if (leveledUp) {
+      const lvup = document.getElementById("lvup");
+      lvup.classList.add("show");
+      const emoji = document.getElementById("c-emoji");
+      emoji.classList.add("pulse");
+      setTimeout(() => { lvup.classList.remove("show"); emoji.classList.remove("pulse"); }, 3000);
+    }
+
+    // 履歴
+    const hist = document.getElementById("hist");
+    hist.innerHTML = "";
+    const items = [...s.history].reverse().slice(0, 8);
+    if (!items.length) {
+      hist.innerHTML = '<div class="empty-hist">まだ記録がありません</div>';
+    } else {
+      items.forEach(item => {
+        const d = document.createElement("div");
+        d.className = "hist-item";
+        d.innerHTML = `<span class="hist-cat">${item.cat}</span><span class="hist-text">${item.text}</span><span class="hist-xp">+${item.xp}XP</span>`;
+        hist.appendChild(d);
+      });
+    }
+  }
+
+  function logAction() {
+    const text = document.getElementById("act-input").value.trim();
+    if (!text) return;
+
+    const s = load();
+    const t = today();
+
+    // ストリーク計算
+    if (!s.lastDate) {
+      s.streak = 1;
+    } else {
+      const diff = Math.floor((new Date(t) - new Date(s.lastDate)) / 86400000);
+      if (diff === 0) { /* 今日すでに記録 - そのまま */ }
+      else if (diff === 1) { s.streak += 1; }
+      else { s.streak = 1; }
+    }
+    s.lastDate = t;
+    s.xp += XP_PER_ACT;
+    s.total += 1;
+
+    // レベルアップ
+    let leveledUp = false;
+    const needed = s.lv * 100;
+    if (s.xp >= needed) {
+      s.xp -= needed;
+      s.lv += 1;
+      leveledUp = true;
+    }
+
+    s.history.push({ date: t, cat: activeCat || "その他", text, xp: XP_PER_ACT });
+    if (s.history.length > 50) s.history.shift();
+
+    save(s);
+    document.getElementById("act-input").value = "";
+    renderMain(s, leveledUp);
+  }
+
+  document.getElementById("act-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") logAction();
+  });
+
+  function reset() {
+    if (confirm("本当に最初からやり直しますか？")) {
+      localStorage.removeItem("prpg");
+      location.reload();
+    }
+  }
+
+  // 起動時に既存データがあればメイン画面へ
+  const existing = load();
+  if (existing) renderMain(existing);
+</script>
+</body>
+</html>
